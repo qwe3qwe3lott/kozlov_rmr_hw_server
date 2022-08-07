@@ -1,0 +1,94 @@
+sequenceDiagram
+    actor User
+    participant SPA
+    participant Backend
+    participant DB
+    activate User
+    User->>+Backend: <<call>> getSPA()
+    Backend-->>-User: <<return>> SPA
+    User->>+SPA: <<create>> init()
+    SPA-->>-User: <<return>> homePage
+    User->>+SPA: <<call>> openKittyPage()
+    opt SPA already contains cookie
+        SPA->>+Backend: <<call>> getKittyImg(cookie)
+        rect rgb(150, 130, 255)
+        critical server interaction
+            Backend->>+Backend: <<call>> parseCookie(cookie)
+            Backend-->>-Backend: <<return>> userInfo
+            Backend->>+DB: <<call>> getUser(userInfo)
+            DB-->>-Backend: <<return>> user
+            alt user exists
+                Backend-->>SPA: <<return>> kittyImg
+                SPA-->>User: <<return>> kittyPage
+            else
+                Backend-->>SPA: <<return>> error 403
+                SPA->>SPA: <<call>> clear cookie
+            end
+        option server error
+            rect rgb(255, 150, 150)
+            break anyway
+                Backend-->>-SPA: error 5**
+                SPA-->>User: errorPage
+            end
+            end
+        end
+        end
+    end
+    opt SPA doesnt contains cookie
+        SPA->>+SPA: <<call>> openAuthPage()
+        SPA-->>-User: <<return>> authPage
+        rect rgb(150, 230, 100)
+        loop untill Backend gets valid auth info
+            rect rgb(250, 200, 60)
+            loop untill SPA gets valid auth info
+                User->>+SPA: <<call>> signIn(authInfo)
+                SPA->>SPA: <<call>> checkAuthInfo(authInfo)
+                opt auth info is not valid 
+                    SPA-->>User: <<return>> errorMessage
+                end
+            end
+            end
+            SPA->>+Backend: <<call>> signIn(authInfo)
+            rect rgb(150, 130, 255)
+            critical server interaction
+                Backend->>Backend: <<call>> checkAuthInfo(authInfo)
+                alt auth info is not valid 
+                    Backend-->>SPA: <<return>> error
+                    SPA-->>-User: <<return>> errorMessage
+                else
+                    Backend->>+DB: <<call>> getUser(authInfo)
+                    DB-->>-Backend: <<return>> user
+                    Backend-->>SPA: <<return>> cookie
+                end
+            option server error
+                rect rgb(255, 150, 150)
+                break anyway
+                    Backend-->>-SPA: error 5**
+                    SPA-->>User: errorPage
+                end
+                end
+            end
+            end
+        end
+        end
+        SPA->>SPA: <<call>> openKittyPage()
+        SPA->>+Backend: <<call>> getKittyImg(cookie)
+        rect rgb(150, 130, 255)
+        critical server interaction
+            Backend->>+Backend: <<call>> parseCookie(cookie)
+            Backend-->>-Backend: <<return>> userInfo
+            Backend->>+DB: <<call>> getUser(userInfo)
+            DB-->>-Backend: <<return>> user
+            Backend-->>SPA: <<return>> kittyImg
+        option server error
+            rect rgb(255, 150, 150)
+            break anyway
+                Backend-->>-SPA: error 5**
+                SPA-->>User: errorPage
+            end
+            end
+        end
+        end
+    end
+    SPA-->>-User: <<return>> kittyPage
+    deactivate User

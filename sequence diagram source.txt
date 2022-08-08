@@ -21,14 +21,14 @@ sequenceDiagram
                 Backend-->>SPA: <<return>> kittyImg
                 SPA-->>User: <<return>> kittyPage
             else
-                Backend-->>SPA: <<return>> error 403
+                Backend-->>SPA: <<return>> error 401
                 SPA->>SPA: <<call>> clear cookie
             end
         option server error
             rect rgb(255, 150, 150)
             break anyway
-                Backend-->>-SPA: error 5**
-                SPA-->>User: errorPage
+                Backend-->>-SPA: <<return>> error 5**
+                SPA-->>User: <<return>> errorPage
             end
             end
         end
@@ -53,7 +53,7 @@ sequenceDiagram
             critical server interaction
                 Backend->>Backend: <<call>> checkAuthInfo(authInfo)
                 alt auth info is not valid 
-                    Backend-->>SPA: <<return>> error
+                    Backend-->>SPA: <<return>> error 401
                     SPA-->>-User: <<return>> errorMessage
                 else
                     Backend->>+DB: <<call>> getUser(authInfo)
@@ -63,8 +63,8 @@ sequenceDiagram
             option server error
                 rect rgb(255, 150, 150)
                 break anyway
-                    Backend-->>-SPA: error 5**
-                    SPA-->>User: errorPage
+                    Backend-->>-SPA: <<return>> error 5**
+                    SPA-->>User: <<return>> errorPage
                 end
                 end
             end
@@ -83,8 +83,8 @@ sequenceDiagram
         option server error
             rect rgb(255, 150, 150)
             break anyway
-                Backend-->>-SPA: error 5**
-                SPA-->>User: errorPage
+                Backend-->>-SPA: <<return>> error 5**
+                SPA-->>User: <<return>> errorPage
             end
             end
         end
